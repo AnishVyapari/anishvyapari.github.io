@@ -9,28 +9,63 @@ interface Comment {
   timestamp: number;
 }
 
+const JSONBIN_BIN_ID = "679f5c1aacd3cb34a8ba4e8e"; // You'll need to create a bin at jsonbin.io
+const API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
 export function CommentsSection() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load comments from localStorage
+  // Load comments from JSONBin API
   useEffect(() => {
-    const stored = localStorage.getItem("portfolio_comments");
-    if (stored) {
-      try {
-        setComments(JSON.parse(stored));
-      } catch (error) {
-        console.error("Error loading comments:", error);
-      }
-    }
+    loadComments();
   }, []);
 
-  // Save comments to localStorage
-  const saveComments = (newComments: Comment[]) => {
-    localStorage.setItem("portfolio_comments", JSON.stringify(newComments));
-    setComments(newComments);
+  const loadComments = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_URL}/latest`);
+      if (response.ok) {
+        const data = await response.json();
+        setComments(data.record || []);
+      }
+    } catch (error) {
+      console.error("Error loading comments:", error);
+      // Fallback to localStorage if API fails
+      const stored = localStorage.getItem("portfolio_comments");
+      if (stored) {
+        setComments(JSON.parse(stored));
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Save comments to JSONBin API
+  const saveComments = async (newComments: Comment[]) => {
+    try {
+      const response = await fetch(API_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newComments),
+      });
+      
+      if (response.ok) {
+        setComments(newComments);
+        // Also save to localStorage as backup
+        localStorage.setItem("portfolio_comments", JSON.stringify(newComments));
+      }
+    } catch (error) {
+      console.error("Error saving comments:", error);
+      // Fallback to localStorage if API fails
+      localStorage.setItem("portfolio_comments", JSON.stringify(newComments));
+      setComments(newComments);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,18 +81,18 @@ export function CommentsSection() {
       timestamp: Date.now(),
     };
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const updatedComments = [newComment, ...comments];
-      saveComments(updatedComments);
+      await saveComments(updatedComments);
       setName("");
       setMessage("");
       setIsSubmitting(false);
     }, 500);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const updatedComments = comments.filter((c) => c.id !== id);
-    saveComments(updatedComments);
+    await saveComments(updatedComments);
   };
 
   const formatTime = (timestamp: number) => {
@@ -78,157 +113,112 @@ export function CommentsSection() {
   return (
     <motion.div
       id="comments"
-      className="glass-strong rounded-3xl p-8 border-purple-500/30 relative overflow-hidden"
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ type: "spring", stiffness: 100 }}
+      transition={{ duration: 0.6 }}
+      className="w-full max-w-4xl mx-auto px-4 py-16"
     >
-      {/* Animated background */}
-      <motion.div
-        className="absolute inset-0 opacity-10"
-        style={{
-          background: "radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.3), transparent)",
-        }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.1, 0.2, 0.1],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-        }}
-      />
-
-      <div className="relative z-10">
+      <div className="bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-blue-500/10 backdrop-blur-lg rounded-3xl border border-white/10 shadow-2xl p-8">
+        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <motion.div
-            className="p-4 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50"
-            whileHover={{ rotate: 360 }}
-            transition={{ duration: 0.6 }}
-          >
+          <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl">
             <MessageCircle className="w-8 h-8 text-white" />
-          </motion.div>
+          </div>
           <div>
-            <h3 className="text-4xl text-purple-100">Leave a Comment</h3>
-            <p className="text-purple-300/70">Share your thoughts!</p>
+            <h2 className="text-3xl font-bold text-white">Leave a Comment</h2>
+            <p className="text-purple-200">Share your thoughts!</p>
           </div>
         </div>
 
         {/* Comment Form */}
-        <motion.form
-          onSubmit={handleSubmit}
-          className="mb-8 space-y-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl glass border border-purple-500/30 text-purple-100 placeholder-purple-400/50 focus:outline-none focus:border-purple-400 transition-all"
-              maxLength={50}
-              required
-            />
-          </div>
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+          <input
+            type="text"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-purple-300 focus:outline-none focus:border-purple-400 transition-colors"
+            maxLength={50}
+          />
+          <div className="relative">
             <textarea
               placeholder="Your message..."
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl glass border border-purple-500/30 text-purple-100 placeholder-purple-400/50 focus:outline-none focus:border-purple-400 transition-all resize-none"
-              rows={4}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-purple-300 focus:outline-none focus:border-purple-400 transition-colors resize-none h-32"
               maxLength={500}
-              required
             />
-            <div className="text-right mt-1 text-sm text-purple-400/60">
+            <div className="absolute bottom-3 right-3 text-sm text-purple-300">
               {message.length}/500
             </div>
           </div>
           <motion.button
             type="submit"
-            disabled={isSubmitting || !name.trim() || !message.trim()}
-            className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all"
-            whileHover={{ scale: 1.02, y: -2 }}
+            disabled={isSubmitting}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {isSubmitting ? (
-              <motion.div
-                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-              />
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                Post Comment
-              </>
-            )}
+            <Send className="w-5 h-5" />
+            {isSubmitting ? "Posting..." : "Post Comment"}
           </motion.button>
-        </motion.form>
+        </form>
 
         {/* Comments List */}
-        <div className="space-y-4">
-          <h4 className="text-2xl text-purple-200 mb-4">
+        <div className="space-y-6">
+          <h3 className="text-2xl font-bold text-white mb-4">
             Comments ({comments.length})
-          </h4>
-          
-          <AnimatePresence mode="popLayout">
-            {comments.length === 0 ? (
-              <motion.div
-                className="text-center py-12 text-purple-300/60"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No comments yet. Be the first to leave one!</p>
-              </motion.div>
-            ) : (
-              comments.map((comment, index) => (
+          </h3>
+
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+              <p className="text-purple-300 mt-4">Loading comments...</p>
+            </div>
+          ) : comments.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-12"
+            >
+              <MessageCircle className="w-16 h-16 text-purple-300 mx-auto mb-4 opacity-50" />
+              <p className="text-purple-300">No comments yet. Be the first to leave one!</p>
+            </motion.div>
+          ) : (
+            <AnimatePresence>
+              {comments.map((comment) => (
                 <motion.div
                   key={comment.id}
-                  className="glass rounded-xl p-5 border border-purple-500/20 hover:border-purple-400/40 transition-all group"
-                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, x: -100, scale: 0.8 }}
-                  transition={{ delay: index * 0.05 }}
-                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 hover:bg-white/10 transition-colors group"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/30">
-                      <User className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h5 className="text-lg text-purple-100">{comment.name}</h5>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-purple-400/70">
-                            {formatTime(comment.timestamp)}
-                          </span>
-                          <motion.button
-                            onClick={() => handleDelete(comment.id)}
-                            className="p-2 rounded-lg glass border border-red-500/30 text-red-400 hover:text-red-300 hover:border-red-400/50 transition-all opacity-0 group-hover:opacity-100"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            title="Delete comment"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </motion.button>
-                        </div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg">
+                        <User className="w-5 h-5 text-white" />
                       </div>
-                      <p className="text-purple-200/80 leading-relaxed whitespace-pre-wrap break-words">
-                        {comment.message}
-                      </p>
+                      <div>
+                        <h4 className="font-semibold text-white">{comment.name}</h4>
+                        <p className="text-sm text-purple-300">{formatTime(comment.timestamp)}</p>
+                      </div>
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleDelete(comment.id)}
+                      className="p-2 text-purple-300 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </motion.button>
                   </div>
+                  <p className="text-white/90 leading-relaxed">{comment.message}</p>
                 </motion.div>
-              ))
-            )}
-          </AnimatePresence>
+              ))}
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </motion.div>
