@@ -9,10 +9,9 @@ interface Comment {
   timestamp: number;
 }
 
-// GitHub repository info
-const GITHUB_OWNER = "AnishVyapari";
-const GITHUB_REPO = "AnishVyapari.github.io";
-const COMMENTS_ISSUE_NUMBER = 1; // We'll use Issue #1 to store comments
+// JSONBin configuration
+const JSONBIN_BIN_ID = "679f5c1aacd3cb34a8ba4e8e";
+const JSONBIN_API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
 
 export function CommentsSection() {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -21,7 +20,7 @@ export function CommentsSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load comments from GitHub Issue
+  // Load comments from JSONBin
   useEffect(() => {
     loadComments();
   }, []);
@@ -30,38 +29,19 @@ export function CommentsSection() {
     try {
       setIsLoading(true);
       
-      // Fetch comments from GitHub Issue
-      const response = await fetch(
-        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${COMMENTS_ISSUE_NUMBER}/comments`,
-        {
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-          },
-        }
-      );
+      // Fetch comments from JSONBin
+      const response = await fetch(JSONBIN_API_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.ok) {
-        const issueComments = await response.json();
-        
-        // Parse comments from issue comments
-        const parsedComments: Comment[] = issueComments
-          .map((comment: any) => {
-            try {
-              // Extract JSON from comment body (format: <!-- COMMENT_DATA:{...} -->)
-              const match = comment.body.match(/<!-- COMMENT_DATA:(.+?) -->/);
-              if (match) {
-                return JSON.parse(match[1]);
-              }
-              return null;
-            } catch {
-              return null;
-            }
-          })
-          .filter((c: any) => c !== null);
-
-        setComments(parsedComments);
+        const data = await response.json();
+        setComments(data.record || []);
       } else {
-        // Fallback to localStorage if GitHub API fails
+        // Fallback to localStorage if JSONBin fails
         const stored = localStorage.getItem("portfolio_comments");
         if (stored) {
           setComments(JSON.parse(stored));
@@ -93,37 +73,32 @@ export function CommentsSection() {
     };
 
     try {
-      // Post comment to GitHub Issue
-      // Format: visible comment + hidden JSON data
-      const commentBody = `**${newComment.name}** commented:\n\n${newComment.message}\n\n---\n*Posted: ${new Date(newComment.timestamp).toLocaleString()}*\n\n<!-- COMMENT_DATA:${JSON.stringify(newComment)} -->`;
+      // Add new comment to the beginning of array
+      const updatedComments = [newComment, ...comments];
 
-      const response = await fetch(
-        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${COMMENTS_ISSUE_NUMBER}/comments`,
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            body: commentBody,
-          }),
-        }
-      );
+      // Save to JSONBin
+      const response = await fetch(JSONBIN_API_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedComments),
+      });
 
-      if (response.ok || response.status === 401 || response.status === 403) {
-        // Even if GitHub API fails (401/403), save locally and update UI
-        const updatedComments = [newComment, ...comments];
+      if (response.ok) {
+        // Update local state
         setComments(updatedComments);
+        // Also save to localStorage as backup
         localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
         
         setName("");
         setMessage("");
-        
-        // If it was successful, reload from GitHub
-        if (response.ok) {
-          setTimeout(() => loadComments(), 1000);
-        }
+      } else {
+        // If API fails, save locally only
+        setComments(updatedComments);
+        localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
+        setName("");
+        setMessage("");
       }
     } catch (error) {
       console.error("Error posting comment:", error);
@@ -138,10 +113,23 @@ export function CommentsSection() {
     }
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = async (id: number) => {
     const updatedComments = comments.filter((c) => c.id !== id);
     setComments(updatedComments);
     localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
+
+    // Try to update JSONBin
+    try {
+      await fetch(JSONBIN_API_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedComments),
+      });
+    } catch (error) {
+      console.error("Error deleting comment from JSONBin:", error);
+    }
   };
 
   const formatTime = (timestamp: number) => {
