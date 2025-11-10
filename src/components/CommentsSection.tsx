@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { MessageCircle, Trash2, Send, User } from "lucide-react";
+import { MessageCircle, Trash2, Send, User, ExternalLink } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface Comment {
@@ -7,11 +7,14 @@ interface Comment {
   name: string;
   message: string;
   timestamp: number;
+  githubUrl?: string;
 }
 
-// JSONBin configuration
-const JSONBIN_BIN_ID = "679f5c1aacd3cb34a8ba4e8e";
-const JSONBIN_API_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+// GitHub repository info
+const GITHUB_OWNER = "AnishVyapari";
+const GITHUB_REPO = "AnishVyapari.github.io";
+const COMMENTS_ISSUE_NUMBER = 1;
+const GITHUB_ISSUE_URL = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${COMMENTS_ISSUE_NUMBER}`;
 
 export function CommentsSection() {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -19,29 +22,56 @@ export function CommentsSection() {
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSubmitMessage, setShowSubmitMessage] = useState(false);
 
-  // Load comments from JSONBin
+  // Load comments from GitHub Issue
   useEffect(() => {
     loadComments();
+    // Refresh comments every 30 seconds
+    const interval = setInterval(loadComments, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadComments = async () => {
     try {
       setIsLoading(true);
       
-      // Fetch comments from JSONBin
-      const response = await fetch(JSONBIN_API_URL, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      // Fetch comments from GitHub Issue (no auth required for public repos)
+      const response = await fetch(
+        `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${COMMENTS_ISSUE_NUMBER}/comments`,
+        {
+          headers: {
+            Accept: "application/vnd.github.v3+json",
+          },
+        }
+      );
 
       if (response.ok) {
-        const data = await response.json();
-        setComments(data.record || []);
+        const issueComments = await response.json();
+        
+        // Parse comments from issue comments
+        const parsedComments: Comment[] = issueComments
+          .map((comment: any) => {
+            try {
+              // Extract JSON from comment body (format: <!-- COMMENT_DATA:{...} -->)
+              const match = comment.body.match(/<!-- COMMENT_DATA:(.+?) -->/);
+              if (match) {
+                const commentData = JSON.parse(match[1]);
+                commentData.githubUrl = comment.html_url;
+                return commentData;
+              }
+              return null;
+            } catch {
+              return null;
+            }
+          })
+          .filter((c: any) => c !== null);
+
+        setComments(parsedComments);
+        // Also save to localStorage for offline access
+        localStorage.setItem("portfolio_comments", JSON.stringify(parsedComments));
       } else {
-        // Fallback to localStorage if JSONBin fails
+        // Fallback to localStorage if GitHub API fails
         const stored = localStorage.getItem("portfolio_comments");
         if (stored) {
           setComments(JSON.parse(stored));
@@ -72,64 +102,37 @@ export function CommentsSection() {
       timestamp: Date.now(),
     };
 
+    // Create the GitHub Issue comment format
+    const commentBody = `**${newComment.name}** commented:\n\n${newComment.message}\n\n---\n*Posted: ${new Date(newComment.timestamp).toLocaleString()}*\n\n<!-- COMMENT_DATA:${JSON.stringify(newComment)} -->`;
+
+    // Encode for URL
+    const encodedBody = encodeURIComponent(commentBody);
+    const submitUrl = `${GITHUB_ISSUE_URL}#issuecomment-new`;
+
+    // Show success message and instructions
+    setShowSubmitMessage(true);
+    setName("");
+    setMessage("");
+    setIsSubmitting(false);
+
+    // Copy comment to clipboard for easy pasting
     try {
-      // Add new comment to the beginning of array
-      const updatedComments = [newComment, ...comments];
-
-      // Save to JSONBin
-      const response = await fetch(JSONBIN_API_URL, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedComments),
-      });
-
-      if (response.ok) {
-        // Update local state
-        setComments(updatedComments);
-        // Also save to localStorage as backup
-        localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
-        
-        setName("");
-        setMessage("");
-      } else {
-        // If API fails, save locally only
-        setComments(updatedComments);
-        localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
-        setName("");
-        setMessage("");
-      }
-    } catch (error) {
-      console.error("Error posting comment:", error);
-      // Save to localStorage as fallback
-      const updatedComments = [newComment, ...comments];
-      setComments(updatedComments);
-      localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
-      setName("");
-      setMessage("");
-    } finally {
-      setIsSubmitting(false);
+      await navigator.clipboard.writeText(commentBody);
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
     }
+
+    // Auto-reload comments after 5 seconds
+    setTimeout(() => {
+      loadComments();
+      setShowSubmitMessage(false);
+    }, 5000);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
     const updatedComments = comments.filter((c) => c.id !== id);
     setComments(updatedComments);
     localStorage.setItem("portfolio_comments", JSON.stringify(updatedComments));
-
-    // Try to update JSONBin
-    try {
-      await fetch(JSONBIN_API_URL, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedComments),
-      });
-    } catch (error) {
-      console.error("Error deleting comment from JSONBin:", error);
-    }
   };
 
   const formatTime = (timestamp: number) => {
@@ -168,6 +171,35 @@ export function CommentsSection() {
           </div>
         </div>
 
+        {/* Submit Success Message */}
+        {showSubmitMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl"
+          >
+            <p className="text-green-300 font-semibold mb-2">✓ Comment copied to clipboard!</p>
+            <p className="text-green-200 text-sm mb-3">
+              To complete submission and sync across devices:
+            </p>
+            <ol className="text-green-200 text-sm space-y-1 mb-3 ml-4 list-decimal">
+              <li>Click the button below to open GitHub</li>
+              <li>Paste (Ctrl+V) your comment in the text box</li>
+              <li>Click "Comment" button</li>
+            </ol>
+            <a
+              href={GITHUB_ISSUE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open GitHub to Submit
+            </a>
+          </motion.div>
+        )}
+
         {/* Comment Form */}
         <form onSubmit={handleSubmit} className="space-y-4 mb-8">
           <input
@@ -192,14 +224,17 @@ export function CommentsSection() {
           </div>
           <motion.button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !name.trim() || !message.trim()}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             className="w-full py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-purple-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Send className="w-5 h-5" />
-            {isSubmitting ? "Posting..." : "Post Comment"}
+            {isSubmitting ? "Preparing..." : "Prepare Comment"}
           </motion.button>
+          <p className="text-sm text-purple-300 text-center">
+            Comments are stored on GitHub for cross-device sync
+          </p>
         </form>
 
         {/* Comments List */}
@@ -242,14 +277,17 @@ export function CommentsSection() {
                         <p className="text-sm text-purple-300">{formatTime(comment.timestamp)}</p>
                       </div>
                     </div>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDelete(comment.id)}
-                      className="p-2 text-purple-300 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </motion.button>
+                    {comment.githubUrl && (
+                      <a
+                        href={comment.githubUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-purple-300 hover:text-purple-200 transition-colors"
+                        title="View on GitHub"
+                      >
+                        <ExternalLink className="w-5 h-5" />
+                      </a>
+                    )}
                   </div>
                   <p className="text-white/90 leading-relaxed">{comment.message}</p>
                 </motion.div>
