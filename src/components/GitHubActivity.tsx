@@ -35,41 +35,41 @@ export function GitHubActivity() {
       try {
         setError(null);
         const response = await fetch("https://api.github.com/users/AnishVyapari/events/public?per_page=30");
-        
+
         if (!response.ok) {
           throw new Error(`GitHub API error: ${response.status}`);
         }
-        
+
         const data = await response.json();
-        
+
         if (Array.isArray(data) && data.length > 0) {
           setEvents(data.slice(0, 15));
-          
+
           // Calculate stats from events
           const commitCount = data.filter((e: GitHubEvent) => e.type === "PushEvent").reduce((sum: number, e: GitHubEvent) => {
             return sum + (e.payload.commits?.length || 0);
           }, 0);
 
-        // Fallback: If no commits found in recent events, estimate from account age
-        let finalCommitCount = commitCount;
-        if (commitCount === 0) {
-          try {
-            const userResponse = await fetch("https://api.github.com/users/AnishVyapari");
-            if (userResponse.ok) {
-              const userData = await userResponse.json();
-              const accountAge = new Date().getFullYear() - new Date(userData.created_at).getFullYear();
-              // Estimate: minimum 50 commits for active developers
-              finalCommitCount = Math.max(50, accountAge * 100);
+          // Fallback: If no commits found in recent events, estimate from account age
+          let finalCommitCount = commitCount;
+          if (commitCount === 0) {
+            try {
+              const userResponse = await fetch("https://api.github.com/users/AnishVyapari");
+              if (userResponse.ok) {
+                const userData = await userResponse.json();
+                const accountAge = new Date().getFullYear() - new Date(userData.created_at).getFullYear();
+                // Estimate: minimum 50 commits for active developers
+                finalCommitCount = Math.max(50, accountAge * 100);
+              }
+            } catch (err) {
+              // If fallback fails, use minimum estimate
+              finalCommitCount = 50;
             }
-          } catch (err) {
-            // If fallback fails, use minimum estimate
-            finalCommitCount = 50;
           }
-        }
-          
+
           const starCount = data.filter((e: GitHubEvent) => e.type === "WatchEvent").length;
           const uniqueRepos = new Set(data.map((e: GitHubEvent) => e.repo.name));
-          
+
           setStats({
             totalCommits: finalCommitCount,
             totalStars: starCount,
@@ -115,7 +115,7 @@ export function GitHubActivity() {
         const commitCount = event.payload.commits?.length || 0;
         const firstCommitMsg = event.payload.commits?.[0]?.message || "";
         return {
-          primary: `${commitCount} commit${commitCount > 1 ? "s" : ""} to ${repoName}`,
+          primary: commitCount === 0 ? `Pushed to ${repoName}` : `${commitCount} commit${commitCount > 1 ? "s" : ""} to ${repoName}`,
           secondary: firstCommitMsg ? `"${firstCommitMsg.substring(0, 60)}${firstCommitMsg.length > 60 ? "..." : ""}"` : null,
         };
       case "CreateEvent":
@@ -162,94 +162,121 @@ export function GitHubActivity() {
 
   return (
     <motion.div
-      className="glass-strong rounded-2xl p-6 border-purple-500/30"
-      initial={{ opacity: 0, x: 50 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      transition={{ type: "spring", stiffness: 100 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/20"
     >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/50">
-          <GitCommit className="w-6 h-6 text-white" />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="p-2 bg-purple-500/20 rounded-lg"
+          >
+            <TrendingUp className="w-6 h-6 text-purple-400" />
+          </motion.div>
+          <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            GitHub Activity
+          </h3>
         </div>
-        <div>
-          <h3 className="text-2xl text-purple-200">GitHub Activity</h3>
-          <div className="flex items-center gap-2 text-sm text-purple-400">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            Live
-          </div>
-        </div>
+        <motion.div
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex items-center space-x-2 text-green-400"
+        >
+          <div className="w-2 h-2 bg-green-400 rounded-full" />
+          <span className="text-sm">Live</span>
+        </motion.div>
       </div>
 
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="glass rounded-lg p-4 animate-pulse">
-              <div className="h-3 bg-purple-500/20 rounded w-3/4 mb-2" />
-              <div className="h-2 bg-purple-500/20 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
-      ) : error ? (
-        <div className="text-center text-red-500">
-          <AlertCircle className="w-6 h-6 inline-block mr-2" />
-          {error}
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-2">
-          {events.map((event, index) => {
-            const Icon = getEventIcon(event.type);
-            const eventText = getEventText(event);
-            const commitCount = event.type === "PushEvent" ? (event.payload.commits?.length || 0) : null;
-            
-            return (
-              <motion.a
-                key={event.id}
-                href={`https://github.com/${event.repo.name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block glass rounded-lg p-4 hover:border-purple-400 transition-all group border border-transparent"
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ x: 5, scale: 1.02 }}
-              >
-                <div className="flex items-start gap-3">
-                  <motion.div
-                    whileHover={{ rotate: 360, scale: 1.2 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                    animate={{ y: [0, -2, 0] }}
-                  >
-                    <Icon className="w-5 h-5 text-purple-400 mt-1 flex-shrink-0" />
-                  </motion.div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          className="bg-gray-700/50 rounded-xl p-4 text-center"
+        >
+          <GitCommit className="w-5 h-5 text-purple-400 mx-auto mb-2" />
+          <div className="text-2xl font-bold text-white">{stats.totalCommits}</div>
+          <div className="text-xs text-gray-400">Commits</div>
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          className="bg-gray-700/50 rounded-xl p-4 text-center"
+        >
+          <Star className="w-5 h-5 text-yellow-400 mx-auto mb-2" />
+          <div className="text-2xl font-bold text-white">{stats.totalStars}</div>
+          <div className="text-xs text-gray-400">Stars</div>
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          className="bg-gray-700/50 rounded-xl p-4 text-center"
+        >
+          <GitFork className="w-5 h-5 text-blue-400 mx-auto mb-2" />
+          <div className="text-2xl font-bold text-white">{stats.activeRepos}</div>
+          <div className="text-xs text-gray-400">Active Repos</div>
+        </motion.div>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="space-y-3">
+        {loading ? (
+          <>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="animate-pulse bg-gray-700/30 rounded-lg p-4 h-20" />
+            ))}
+          </>
+        ) : error ? (
+          <div className="flex items-center justify-center space-x-2 text-red-400 py-8">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+        ) : (
+          <>
+            {events.map((event, index) => {
+              const Icon = getEventIcon(event.type);
+              const eventText = getEventText(event);
+              const commitCount = event.type === "PushEvent" ? (event.payload.commits?.length || 0) : null;
+
+              return (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, backgroundColor: "rgba(139, 92, 246, 0.1)" }}
+                  className="bg-gray-700/30 rounded-lg p-4 flex items-start space-x-3 cursor-pointer transition-colors"
+                >
+                  <div className="p-2 bg-purple-500/20 rounded-lg">
+                    <Icon className="w-4 h-4 text-purple-400" />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-purple-100 text-sm group-hover:text-purple-50 transition-colors">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-sm text-white font-medium truncate">
                         {eventText.primary}
                       </p>
                       {commitCount !== null && commitCount > 0 && (
-                        <span className="px-2 py-0.5 rounded-full bg-purple-500/30 text-purple-200 text-xs border border-purple-400/30">
+                        <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs rounded-full">
                           {commitCount}
                         </span>
                       )}
                     </div>
                     {eventText.secondary && (
-                      <p className="text-purple-300/70 text-xs mb-1 italic line-clamp-1">
+                      <p className="text-xs text-gray-400 mt-1 truncate">
                         {eventText.secondary}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 text-xs text-purple-400">
+                    <div className="flex items-center space-x-2 mt-2 text-xs text-gray-500">
                       <Calendar className="w-3 h-3" />
-                      {formatTime(event.created_at)}
+                      <span>{formatTime(event.created_at)}</span>
                     </div>
                   </div>
-                </div>
-              </motion.a>
-            );
-          })}
-        </div>
-      )}
+                </motion.div>
+              );
+            })}
+          </>
+        )}
+      </div>
     </motion.div>
   );
 }
