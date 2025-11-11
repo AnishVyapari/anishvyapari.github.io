@@ -1,12 +1,13 @@
 import { motion } from "motion/react";
 import Giscus from "@giscus/react";
+import { getParticleCount } from "../utils/performance";
 
 export function CommentsSection() {
   return (
     <section id="comments" className="min-h-screen flex items-center justify-center py-20 relative overflow-hidden">
       {/* Animated background particles */}
       <div className="absolute inset-0 z-0">
-        {[...Array(50)].map((_, i) => (
+        {[...Array(getParticleCount())].map((_, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-purple-500/30 rounded-full"
