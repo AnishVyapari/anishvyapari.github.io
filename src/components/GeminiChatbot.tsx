@@ -6,7 +6,7 @@ interface Message {
   content: string;
 }
 
-const VyapariGPT: React.FC = () => {
+const GeminiChatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -254,4 +254,4 @@ INSTRUCTIONS:
   );
 };
 
-export default VyapariGPT;
+export default GeminiChatbot;
