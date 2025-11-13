@@ -3,7 +3,8 @@ import react from '@vitejs/plugin-react-swc';
 import path from 'path';
 
 export default defineConfig({
-  base: '/AnishVyapari.github.io/',   // <--- THIS IS CRUCIAL!
+  ,   // <--- THIS IS CRUCIAL!
+    base: '/',  
   plugins: [react()],
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
