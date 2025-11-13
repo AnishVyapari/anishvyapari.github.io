@@ -37,9 +37,6 @@ const GeminiChatbot: React.FC = () => {
     try {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
       
-      if (!apiKey) {
-        throw new Error('API key not configured');
-      }
 
       // System prompt with all your context
       const systemPrompt = `You are VyapariGPT, the AI assistant for Anish Vyapari's portfolio website. Your job is to answer questions about Anish in a friendly, engaging way.
