@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+VyapariGPT  GeminiChatbotimport { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import {
   Github,
