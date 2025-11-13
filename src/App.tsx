@@ -27,6 +27,7 @@ import { EnhancedProjectCard } from "./components/EnhancedProjectCard";
 import { SkillBadge } from "./components/SkillBadge";
 import { GitHubActivity } from "./components/GitHubActivity";
 import { EnhancedLanyardDiscord } from "./components/EnhancedLanyardDiscord";
+import GeminiChatbot from './components/GeminiChatbot';
 import { ParallaxSection } from "./components/ParallaxSection";
 import { SocialLinks } from "./components/SocialLinks";
 import { SupportSection } from "./components/SupportSection";
@@ -857,6 +858,7 @@ export default function App() {
             </motion.div>
           </div>
         </footer>
+              <GeminiChatbot />
       </div>
     </div>
   );
