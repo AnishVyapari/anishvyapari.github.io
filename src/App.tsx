@@ -27,7 +27,7 @@ import { EnhancedProjectCard } from "./components/EnhancedProjectCard";
 import { SkillBadge } from "./components/SkillBadge";
 import { GitHubActivity } from "./components/GitHubActivity";
 import { EnhancedLanyardDiscord } from "./components/EnhancedLanyardDiscord";
-import GeminiChatbot from './components/GeminiChatbot';
+import VyapariGPT from './components/GeminiChatbot';
 import { ParallaxSection } from "./components/ParallaxSection";
 import { SocialLinks } from "./components/SocialLinks";
 import { SupportSection } from "./components/SupportSection";
@@ -527,6 +527,9 @@ export default function App() {
                   </motion.div>
                 </MagneticButton>
               </motion.div>
+              
+          {/* VyapariGPT Chatbot Section */}
+          <VyapariGPT />
 
               <motion.p
                 className="text-center text-purple-200/80 mb-12 text-lg"
@@ -858,7 +861,7 @@ export default function App() {
             </motion.div>
           </div>
         </footer>
-              <GeminiChatbot />
+              <VyapariGPT />
       </div>
     </div>
   );
