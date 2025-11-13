@@ -7,7 +7,7 @@ interface Message {
 }
 
 const VyapariGPT: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
