@@ -44,7 +44,7 @@
       messagesDiv.appendChild(loadDiv);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {          headers: {'Content-Type': 'application/json'},
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {          headers: {'Content-Type': 'application/json'},
                                                                                                                                                                  method: 'POST',
           body: JSON.stringify({contents: [{parts: [{text: msg}]}]})
         });
