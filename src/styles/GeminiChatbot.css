@@ -1,13 +1,49 @@
 /* VyapariGPT Chatbot Styling - Purple Theme */
 
+/* Floating Toggle Button */
+.vyapari-gpt-toggle {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9d4edd, #c77dff);
+  color: white;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(157, 78, 221, 0.5);
+  transition: all 0.3s ease;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vyapari-gpt-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(157, 78, 221, 0.7);
+}
+
+.vyapari-gpt-toggle:active {
+  transform: scale(0.95);
+}
+
+
+
 /* Main Chatbot Container */
 .vyapari-gpt-container {
-  width: 100%;
-  max-width: 800px;
-  margin: 40px auto;
+  position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 400px;
+  
+
   background: linear-gradient(135deg, rgba(157, 78, 221, 0.1), rgba(199, 125, 255, 0.1));
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(157, 78, 221, 0.3);
+    z-index: 9998;
   overflow: hidden;
   border: 1px solid rgba(157, 78, 221, 0.3);
 }
