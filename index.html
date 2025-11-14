@@ -1,65 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AnishVyapari</title>
+    <script type="module" crossorigin src="/assets/index-luJPoM9Q.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CvnqO04c.css">
+</head>
+<body>
+    <div id="root"></div>
 
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>AnishVyapari</title>
-      <script type="module" crossorigin src="/assets/index-luUPoM0O.js"></script>
-      <link rel="stylesheet" crossorigin href="/assets/index-Cvnqo04c.css">
-    </head>
-
-    <body>
-      <div id="root"></div>
-<div id="chat-widget" style="position:fixed;bottom:20px;right:20px;width:380px;height:500px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #0f3460;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:none;flex-direction:column;z-index:9999;font-family:Segoe UI,sans-serif;color:#e0e0e0;overflow:hidden;">
-  <div style="background:linear-gradient(135deg,#00d4ff,#0099cc);padding:16px;border-radius:12px 12px 0 0;font-weight:bold;font-size:16px;color:white;display:flex;justify-content:space-between">
-    <span>AI Chat</span>
-    <button onclick="document.getElementById('chat-widget').style.display='none'" style="background:none;border:none;color:white;cursor:pointer;font-size:20px">&times;</button>
-  </div>
-  <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
-    <div style="background:#0f3460;padding:10px 12px;border-radius:8px;font-size:14px;">Hi there!</div>
-  </div>
-  <div style="padding:12px;border-top:1px solid #0f3460;display:flex;gap:8px;">
-    <input id="chat-input" type="text" placeholder="Type message..." style="flex:1;padding:10px;background:#0f3460;border:1px solid #00d4ff;border-radius:6px;color:#e0e0e0;" />
-    <button onclick="sendChatMessage()" style="padding:10px 16px;background:#00d4ff;border:none;border-radius:6px;color:#000;cursor:pointer;font-weight:bold;">Send</button>
-  </div>
+<div id="chat-widget" style="position:fixed;bottom:20px;right:20px;width:380px;height:500px;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #0f3460;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);padding:16px;border-radius:12px 12px 0 0;font-weight:bold;font-size:16px;color:white;display:flex;justify-content:space-between">
+    <div style="background:linear-gradient(135deg,#0d4fff,#00096c);padding:16px;border-radius:12px 12px 0 0;font-weight:bold;font-size:16px;color:white;display:flex;justify-content:space-between">
+        <span>AnishBot 🤖</span>
+        <button onclick="document.getElementById('chat-widget').style.display='none'" style="background:none;border:none;color:white;cursor:pointer;font-size:20px">&times;</button>
+    </div>
+    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#0f3460;padding:10px 12px;border-radius:8px;font-size:14px;">Hi there!</div>
+    </div>
+    <div style="padding:12px;border-top:1px solid #0f3460;display:flex;gap:8px;">
+        <input id="chat-input" type="text" placeholder="Type message..." style="flex:1;padding:10px;background:#0f3460;border:1px solid #0d4fff;border-radius:6px;color:#dce4ea;" />
+        <button onclick="sendChatMessage()" style="padding:10px 16px;background:#0d4fff;border:none;border-radius:6px;color:#000;cursor:pointer;font-weight:bold;">Send</button>
+    </div>
 </div>
-<button id="chat-btn" onclick="document.getElementById('chat-widget').style.display='flex'" style="position:fixed;bottom:30px;right:30px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#00d4ff,#0099cc);border:none;color:white;font-size:24px;cursor:pointer;z-index:9998;box-shadow:0 4px 12px rgba(0,212,255,0.4);transition:all 0.3s;">💬</button>
-    </body>
-      <script>
-      const GEMINI_API_KEY = 'AIzaSyBRkf5aYqmCXu4oCELAUBUpJU77yqyrSV4';    async function sendChatMessage() {
-      const input = document.getElementById('chat-input');
-      const messagesDiv = document.getElementById('chat-messages');
-      const msg = input.value.trim();
-      if (!msg) return;
-      const userDiv = document.createElement('div');
-      userDiv.style.cssText = 'background:#00d4ff;color:#000;padding:8px 12px;border-radius:6px;align-self:flex-end;max-width:80%;word-wrap:break-word;';
-      userDiv.textContent = msg;
-      messagesDiv.appendChild(userDiv);
-      input.value = '';
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      const loadDiv = document.createElement('div');
-      loadDiv.style.cssText = 'background:#0f3460;color:#00d4ff;padding:8px 12px;border-radius:6px;align-self:flex-start;';
-      loadDiv.textContent = 'Thinking...';
-      messagesDiv.appendChild(loadDiv);
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {          headers: {'Content-Type': 'application/json'},
-                                                                                                                                                                 method: 'POST',
-          body: JSON.stringify({contents: [{parts: [{text: msg}]}]})
-        });
-        const data = await res.json();
-      if (data.error) { const reply = data.error.message || JSON.stringify(data.error); if (reply.includes('overloaded') || reply.includes('quota') || reply.includes('429')) { loadDiv.textContent = 'The AI is busy right now. Please try again in a few seconds!'; loadDiv.style.color = '#ffa500'; } else { loadDiv.textContent = 'API Error: ' + reply; loadDiv.style.color = '#ff60b0'; } } else {        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Error: No response';
+<button id="chat-btn" onclick="document.getElementById('chat-widget').style.display='flex'" style="position:fixed;bottom:30px;right:30px;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid #0f3460;cursor:pointer;font-size:28px;color:white;box-shadow:0 4px 12px rgba(0,0,0,0.3)">
+    💬
+</body>
+<script>
+const GEMINI_API_KEY = 'AIzaSyBRkf5aYqmCXu4oCELAUBUpJU77yqyrSV4';  async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const messagesDiv = document.getElementById('chat-messages');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const userDiv = document.createElement('div');
+  userDiv.style.cssText = 'background:#0d4fff;color:#000;padding:8px 12px;border-radius:6px;align-self:flex-end;max-width:80%;word-wrap:break-word;';
+  userDiv.textContent = msg;
+  messagesDiv.appendChild(userDiv);
+  input.value = '';
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  const loadDiv = document.createElement('div');
+  loadDiv.style.cssText = 'background:#0f3460;color:#0d4fff;padding:8px 12px;border-radius:6px;align-self:flex-start;';
+  loadDiv.textContent = 'Thinking...';
+  messagesDiv.appendChild(loadDiv);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+        body: JSON.stringify({contents: [{parts: [{text: `You are AnishBot, a friendly AI assistant for Anish Vyapari's portfolio website. Here's what you should know about Anish:\n\nName: Anish Vyapari\nAge: 19\nEducation: BTech CSE (AI & ML) at RAIT Nerul, Navi Mumbai (1st Year, Started Sept 2025, Expected Graduation: 2029)\nLocation: Nerul, Navi Mumbai (19.0176°N, 73.0073°E, IST UTC+5:30)\nDiscord: @shaboings (HypeSquad Bravery, Available for opportunities)\n\nFocus Areas:\n- Deep Learning\n- Computer Vision\n\nInterests:\n- Robotics & Automation\n- Edge AI & MLOps\n\nSkills & Technologies: Python, Machine Learning, Deep Learning, TensorFlow, PyTorch, Scikit-learn, React, JavaScript, TypeScript, Node.js, Data Science, Computer Vision, NLP, Neural Networks, SQL, MongoDB, Git, Docker, AWS, FastAPI, Flask, Pandas, NumPy, Keras, OpenCV, Transformers\n\nNotable Projects:\n1. YOLOv8 Autonomous Drone - Autonomous drone with YOLOv8 object detection for real-time aerial surveillance\n2. ShadowRAT - Discord-based Remote Administration Tool for security research\n3. Custom LLM - GPT-style Large Language Model built from scratch with PyTorch\n4. AI Network Security IDS - AI-powered intrusion detection system\n5. Autonomous SLAM Robot (ROS2) - Real-time mapping and navigation\n\nContact:\n- GitHub: AnishVyapari (9 repositories, 1 follower)\n- Instagram: @anish_vyapari\n- Discord Server: discord.gg/dzsKgWMgjJ\n- Email: anishvyaparionline@gmail.com\n- UPI: 8422936009@mbk\n\nBe helpful, friendly, and knowledgeable about Anish's work. Answer questions about his projects, skills, education, and interests. If someone asks about collaboration or wants to connect, direct them to his contact methods.\n\nUser question: ${msg}`}]}]})
+    });
+    const data = await res.json();
+    if (data.error) { const reply = data.error.message || JSON.stringify(data.error); if (reply.includes('overloaded') || reply.includes('quota') || reply.includes('429')) { loadDiv.textContent = 'The AI is busy right now. Please try again in a few seconds!'; loadDiv.style.color = '#ede0e0'; }
+    } else {
+        const reply = data.candidates[0].content.parts[0].text;
         loadDiv.textContent = reply;
-        loadDiv.style.color = '#e0e0e0';
-            }
-      } catch (e) {
-        loadDiv.textContent = 'Error: ' + e.message;
-        loadDiv.style.color = '#ff6b6b';
-      }
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        loadDiv.style.color = '#ede0e0';
     }
-    document.getElementById('chat-input')?.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendChatMessage(); });
-  </script>
-  </html>
-  
+  } catch (e) {
+    loadDiv.textContent = 'Error: ' + e.message;
+    loadDiv.style.color = '#ff60b0';
+  }
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+document.getElementById('chat-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') sendChatMessage();
+});
+</script>
+</html>
