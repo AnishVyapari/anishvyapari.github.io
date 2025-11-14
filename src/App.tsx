@@ -862,7 +862,7 @@ export default function App() {
           </div>
         </footer>
               <GeminiChatbot />
-         {/* Chatbot Added */}
+         {/* Chatbot Component Active v2 - Cache Bust */}
       </div>
     </div>
   );
