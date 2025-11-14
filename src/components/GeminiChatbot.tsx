@@ -35,7 +35,7 @@ const GeminiChatbot: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      const apiKey = 'YOUR_GEMINI_API_KEY_HERE'; // Replace with your actual Gemini API key
       
 
       // System prompt with all your context
