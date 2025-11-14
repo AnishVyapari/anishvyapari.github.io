@@ -1,4 +1,4 @@
-VyapariGPT  GeminiChatbotimport { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import {
   Github,
@@ -528,8 +528,8 @@ export default function App() {
                 </MagneticButton>
               </motion.div>
               
-          {/* VyapariGPT Chatbot Section */}
-          <VyapariGPT />
+          {/* GeminiChatbot Chatbot Section */}
+          <GeminiChatbot />
 
               <motion.p
                 className="text-center text-purple-200/80 mb-12 text-lg"
@@ -861,7 +861,7 @@ export default function App() {
             </motion.div>
           </div>
         </footer>
-              <VyapariGPT />
+              <GeminiChatbot />
       </div>
     </div>
   );
