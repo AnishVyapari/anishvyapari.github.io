@@ -20,10 +20,11 @@ const GeminiChatbot: React.FC = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        fontFamily: 'system-ui, sans-serif',
       }}
-      title="VyapariGPT"
+      title="VyapariGPT Chat"
     >
-      🤖
+      AI
     </button>
   );
 };
