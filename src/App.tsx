@@ -529,7 +529,7 @@ export default function App() {
               </motion.div>
               
           {/* GeminiChatbot Chatbot Section */}
-          <GeminiChatbot />
+          <button style={{ position: 'fixed', bottom: '30px', right: '30px', width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, #9d4edd 0%, #c77dff 100%)', color: 'white', border: 'none', fontSize: '32px', cursor: 'pointer', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', boxShadow: '0 6px 20px rgba(157, 78, 221, 0.6)' }} title="VyapariGPT Chatbot" onClick={() => console.log('Chat button clicked!')}>✨</button>
 
               <motion.p
                 className="text-center text-purple-200/80 mb-12 text-lg"
