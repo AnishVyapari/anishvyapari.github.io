@@ -49,8 +49,7 @@
           body: JSON.stringify({contents: [{parts: [{text: msg}]}]})
         });
         const data = await res.json();
-         if (data.error) { const reply = data.error.message || JSON.stringify(data.error); loadDiv.textContent = 'API Error: ' + reply; loadDiv.style.color = '#ff6b6b'; } else {
-        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Error: No response';
+      if (data.error) { const reply = data.error.message || JSON.stringify(data.error); if (reply.includes('overloaded') || reply.includes('quota') || reply.includes('429')) { loadDiv.textContent = 'The AI is busy right now. Please try again in a few seconds!'; loadDiv.style.color = '#ffa500'; } else { loadDiv.textContent = 'API Error: ' + reply; loadDiv.style.color = '#ff60b0'; } } else {        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Error: No response';
         loadDiv.textContent = reply;
         loadDiv.style.color = '#e0e0e0';
             }
