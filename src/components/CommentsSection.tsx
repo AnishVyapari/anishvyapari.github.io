@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import Giscus from "@giscus/react";
 import { getParticleCount } from "../utils/performance";
 
 export function CommentsSection() {
@@ -45,22 +44,7 @@ export function CommentsSection() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          <Giscus
-            repo="AnishVyapari/AnishVyapari.github.io"
-            repoId="R_kgDONcNGig"
-            category="General"
-            categoryId="DIC_kwDONcNGis4ClSbR"
-            mapping="pathname"
-            strict="0"
-            reactionsEnabled="1"
-            emitMetadata="0"
-            inputPosition="top"
-            theme="dark"
-            lang="en"
-            loading="lazy"
-          />
-        </motion.div>
-      </div>
+          <p style={{textAlign: 'center', marginTop: '40px', color: '#888', fontSize: '16px'}}>Comments coming soon! Check back later.</p>
     </section>
   );
 }
