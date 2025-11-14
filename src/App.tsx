@@ -862,6 +862,7 @@ export default function App() {
           </div>
         </footer>
               <GeminiChatbot />
+         {/* Chatbot Added */}
       </div>
     </div>
   );
