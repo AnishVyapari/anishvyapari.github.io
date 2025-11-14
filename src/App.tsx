@@ -864,6 +864,7 @@ export default function App() {
               <GeminiChatbot />
          {/* Chatbot Component Active v2 - Cache Bust */}
       </div>
+            <button style={{position:'fixed',bottom:'30px',right:'30px',width:'70px',height:'70px',borderRadius:'50%',background:'linear-gradient(135deg, #9d4edd, #c77dff)',color:'white',border:'none',zIndex:9999,fontSize:'32px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}} title="AI Chat">✨</button>
     </div>
   );
 }
