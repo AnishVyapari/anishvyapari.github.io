@@ -7,7 +7,7 @@ interface Message {
 }
 
 const GeminiChatbot: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
