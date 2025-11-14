@@ -51,9 +51,11 @@
           body: JSON.stringify({contents: [{parts: [{text: msg}]}]})
         });
         const data = await res.json();
+         if (data.error) { const reply = data.error.message || JSON.stringify(data.error); loadDiv.textContent = 'API Error: ' + reply; loadDiv.style.color = '#ff6b6b'; } else {
         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Error: No response';
         loadDiv.textContent = reply;
         loadDiv.style.color = '#e0e0e0';
+            }
       } catch (e) {
         loadDiv.textContent = 'Error: ' + e.message;
         loadDiv.style.color = '#ff6b6b';
