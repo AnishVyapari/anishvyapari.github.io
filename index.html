@@ -11,7 +11,12 @@
 
     <body>
       <div id="root"></div>
-          <button id="chatbot-btn" style="position:fixed;bottom:30px;right:30px;width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#9d4edd,#c77dff);color:white;border:none;z-index:9999;font-size:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(157,78,221,0.6)">✨</button>
+<button id="chatbot-btn" style="position:fixed;bottom:30px;right:30px;width:50px;height:50px;border-radius:50%;background:rgba(50,20,80,0.7);color:rgba(200,150,255,0.8);border:1px solid rgba(157,78,221,0.4);z-index:9999;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.3s ease" onmouseover="this.style.background='rgba(100,50,150,0.9)';this.style.color='rgb(255,200,255)'" onmouseout="this.style.background='rgba(50,20,80,0.7)';this.style.color='rgba(200,150,255,0.8)'">💬</button>
+    <script>
+      document.getElementById('chatbot-btn').addEventListener('click', function() {
+        alert('Chat feature coming soon!');
+      });
+    </script>
     </body>
   </html>
   
