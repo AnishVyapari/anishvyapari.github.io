@@ -1,44 +1,49 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 
 const GeminiChatbot: React.FC = () => {
-  const chatbotButton = (
+  return (
     <button
       style={{
         position: 'fixed',
         bottom: '30px',
         right: '30px',
-        width: '60px',
-        height: '60px',
+        width: '70px',
+        height: '70px',
         borderRadius: '50%',
-        backgroundColor: 'linear-gradient(135deg, #9d4edd, #c77dff)',
+        background: 'linear-gradient(135deg, #9d4edd 0%, #c77dff 100%)',
         color: 'white',
         border: 'none',
-        fontSize: '24px',
+        fontSize: '32px',
         cursor: 'pointer',
-        zIndex: 10000,
+        zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontWeight: 'bold',
-        boxShadow: '0 4px 12px rgba(157, 78, 221, 0.5)',
-        transition: 'all 0.3s ease',
+        boxShadow: '0 6px 20px rgba(157, 78, 221, 0.6)',
+        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        padding: '0',
       }}
-      title="VyapariGPT Chat"
+      title="VyapariGPT Chatbot"
+      aria-label="Open AI Chatbot"
+      onClick={() => {
+        console.log('Chatbot button clicked!');
+        // Chat functionality will be added here
+      }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'scale(1.1)';
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.transform = 'scale(1.15) translateY(-5px)';
+        btn.style.boxShadow = '0 10px 30px rgba(157, 78, 221, 0.8)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'scale(1)';
+        const btn = e.currentTarget as HTMLButtonElement;
+        btn.style.transform = 'scale(1) translateY(0)';
+        btn.style.boxShadow = '0 6px 20px rgba(157, 78, 221, 0.6)';
       }}
     >
       ✨
     </button>
   );
-
-  return typeof document !== 'undefined'
-    ? createPortal(chatbotButton, document.body)
-    : null;
 };
 
 export default GeminiChatbot;
