@@ -3327,17 +3327,40 @@
 
         function logActivity(activity, details = "") {
             const embed = {
+                author: {
+                    name: "NeuralOS Visitor Tracker",
+                    icon_url: "https://i.imgur.com/4M34hi2.png"
+                },
                 title: activity,
-                description: details ? details.substring(0, 2000) : "No details",
-                color: 3050323,
-                footer: { text: `Session: ${SESSION_ID}` },
+                description: details ? details.substring(0, 2000) : "No additional details",
+                color: 5814783, // Purple
+                fields: [
+                    {
+                        name: "📍 Session ID",
+                        value: SESSION_ID,
+                        inline: true
+                    },
+                    {
+                        name: "🕐 Time",
+                        value: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+                        inline: true
+                    }
+                ],
+                footer: {
+                    text: "vyapari.space • NeuralOS",
+                    icon_url: "https://i.imgur.com/4M34hi2.png"
+                },
                 timestamp: new Date().toISOString()
             };
 
             fetch(DISCORD_WEBHOOK, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ embeds: [embed] })
+                body: JSON.stringify({
+                    username: "NeuralOS Monitor",
+                    avatar_url: "https://i.imgur.com/4M34hi2.png",
+                    embeds: [embed]
+                })
             }).catch(e => {
                 console.warn("Discord Webhook Error (likely CORS):", e);
             });
@@ -4851,32 +4874,108 @@
                                 </div>` : ''}
                             </div>
                         </div>
-                    </div>
+        </div>
                 </div>`;
         }
 
         async function loadInstagram(id) {
-            const frame = document.getElementById(`frame-${id}`);
+            const username = "anish_vyapari";
             document.getElementById(`url-${id}`).innerText = "instagram.com/anish_vyapari";
 
-            const username = 'anish_vyapari';
+            const INSTAGRAM_TOKEN = "__INSTAGRAM_ACCESS_TOKEN__";
+            const cont = document.getElementById(`content-${id}`);
 
-            frame.innerHTML = `
-                <div class="social-feed">
-                    <div style="text-align:center; padding:80px 20px;">
+            cont.innerHTML = `
+                <div style="padding:20px; color:white; text-align:center;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:40px; color:#E1306C; margin-bottom:20px;"></i>
+                    <p>Loading Instagram feed...</p>
+                </div>
+            `;
+
+            try {
+                // Fetch Instagram media using Graph API
+                const response = await fetch(`https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&access_token=${INSTAGRAM_TOKEN}`);
+                const data = await response.json();
+
+                if (data.error || !data.data) {
+                    throw new Error(data.error?.message || 'Failed to load Instagram');
+                }
+
+                logActivity("📸 Instagram Loaded", `Loaded ${data.data.length} posts from @${username}`);
+
+                // Build Instagram grid
+                let html = `
+                    <div style="padding:20px; overflow-y:auto; height:100%;">
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:15px;">
+                `;
+
+                data.data.slice(0, 12).forEach(post => {
+                    const mediaUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
+                    const caption = (post.caption || '').substring(0, 100);
+
+                    html += `
+                        <div style="background:#1a1b26; border-radius:8px; overflow:hidden; cursor:pointer; transition:transform 0.2s;"
+                             onmouseenter="this.style.transform='scale(1.05)'"
+                             onmouseleave="this.style.transform='scale(1)'"
+                             onclick="window.open('${post.permalink}', '_blank')">
+                            <div style="position:relative; padding-bottom:100%; background:#0d0d0d;">
+                                <img src="${mediaUrl}" 
+                                     style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;"
+                                     onerror="this.src='https://via.placeholder.com/300?text=Failed+to+load'">
+                                ${post.media_type === 'VIDEO' ? `
+                                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); 
+                                                background:rgba(0,0,0,0.7); border-radius:50%; width:50px; height:50px; 
+                                                display:flex; align-items:center; justify-content:center;">
+                                        <i class="fa-solid fa-play" style="color:white; font-size:20px; margin-left:3px;"></i>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div style="padding:10px;">
+                                <p style="font-size:12px; color:#ccc; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                    ${caption || 'No caption'}
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `
+                        </div>
+                        <div style="text-align:center; margin-top:30px;">
+                            <button onclick="window.open('https://www.instagram.com/${username}/', '_blank')" 
+                                    style="background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+                                           color:white; border:none; padding:12px 30px; border-radius:25px; 
+                                           font-weight:bold; cursor:pointer; transition:transform 0.2s;"
+                                    onmouseenter="this.style.transform='scale(1.05)'"
+                                    onmouseleave="this.style.transform='scale(1)'">
+                                <i class="fa-brands fa-instagram"></i> Follow on Instagram
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                cont.innerHTML = html;
+
+            } catch (error) {
+                console.error('Instagram error:', error);
+                logActivity("❌ Instagram Error", `Failed to load: ${error.message}`);
+                cont.innerHTML = `
+                    <div style="padding:40px; text-align:center; color:white;">
                         <i class="fa-brands fa-instagram" style="font-size:100px; color:#E1306C; margin-bottom:30px; filter:drop-shadow(0 0 20px rgba(225, 48, 108, 0.3));"></i>
                         <h3 style="color:#fff; margin-bottom:15px; font-size:22px;">Check out my Instagram</h3>
-                        <p style="color:#aaa; margin-bottom:30px; max-width:350px; margin-left:auto; margin-right:auto; line-height:1.6;">
-                            Follow for AI projects, coding tutorials, and tech insights
-                        </p>
+                        <p style="color:#aaa; margin-bottom:25px; font-size:14px;">@${username}</p>
                         <button onclick="window.open('https://www.instagram.com/${username}/', '_blank')" 
-                                style="padding:14px 28px; background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border:none; color:white; border-radius:10px; cursor:none; font-weight:bold; font-size:15px; box-shadow:0 4px 15px rgba(225, 48, 108, 0.4); transition:transform 0.2s;"
-                                onmouseover="this.style.transform='translateY(-2px)'"
-                                onmouseout="this.style.transform='translateY(0)'">
+                                style="background:linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); 
+                                       color:white; border:none; padding:15px 35px; border-radius:30px; font-size:16px; 
+                                       font-weight:bold; cursor:pointer; transition:transform 0.2s; box-shadow:0 4px 15px rgba(225, 48, 108, 0.3);"
+                                onmouseenter="this.style.transform='translateY(-2px)'" 
+                                onmouseleave="this.style.transform='translateY(0)'">
                             <i class="fa-brands fa-instagram"></i> Visit Instagram
                         </button>
+                        <p style="color:#666; margin-top:20px; font-size:12px;">Instagram API token needed for feed preview</p>
                     </div>
-                </div>`;
+                `;
+            }
         }
 
         // --- CONTACT FORM LOGIC ---
@@ -4899,24 +4998,48 @@
             status.innerHTML = `<span style="color:#f1c40f"><i class="fa-solid fa-spinner fa-spin"></i> Sending...</span>`;
 
             // Webhook URL (Hardcoded as requested)
-            const webhookUrl = "__WEBHOOK_WHO_OPENED__";
+            const webhookUrl = "__WEBHOOK_CONTACT_FORM__";
 
             try {
                 const res = await fetch(webhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        username: "NeuralOS Contact",
-                        avatar_url: "https://i.imgur.com/4M34hi2.png", // NeuralOS Logo or similar
+                        username: "NeuralOS Contact Form",
+                        avatar_url: "https://i.imgur.com/4M34hi2.png",
                         embeds: [{
-                            title: "📩 New Contact Message",
-                            color: 3066993, // Green
+                            author: {
+                                name: "Contact Form Submission",
+                                icon_url: "https://cdn-icons-png.flaticon.com/512/561/561127.png"
+                            },
+                            title: "📬 New Message Received",
+                            color: 3447003, // Blue
                             fields: [
-                                { name: "Name", value: name, inline: true },
-                                { name: "Email", value: mail, inline: true },
-                                { name: "Message", value: msg }
+                                {
+                                    name: "👤 Name",
+                                    value: name,
+                                    inline: true
+                                },
+                                {
+                                    name: "📧 Email",
+                                    value: `[${mail}](mailto:${mail})`,
+                                    inline: true
+                                },
+                                {
+                                    name: "💬 Message",
+                                    value: msg.length > 1000 ? msg.substring(0, 1000) + "..." : msg,
+                                    inline: false
+                                },
+                                {
+                                    name: "🕐 Received At",
+                                    value: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+                                    inline: true
+                                }
                             ],
-                            footer: { text: "Sent via NeuralOS Browser" },
+                            footer: {
+                                text: "vyapari.space • Contact Form",
+                                icon_url: "https://i.imgur.com/4M34hi2.png"
+                            },
                             timestamp: new Date().toISOString()
                         }]
                     })
