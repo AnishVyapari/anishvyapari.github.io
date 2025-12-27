@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNS Monitor - NeuralOS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .status-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .status-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .value {
+            color: #333;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-checking {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-check:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-check:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            color: #d4d4d4;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .log-success {
+            color: #4ec9b0;
+        }
+
+        .log-error {
+            color: #f48771;
+        }
+
+        .log-info {
+            color: #569cd6;
+        }
+
+        .log-warning {
+            color: #dcdcaa;
+        }
+
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+
+        .next-check {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 13px;
+            color: #0066cc;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🌐 DNS Monitor</h1>
+        <p class="subtitle">Auto-checking every 5 minutes with Discord notifications</p>
+
+        <div class="status-card">
+            <div class="status-row">
+                <span class="label">Domain:</span>
+                <span class="value" id="domain">anishvyapari.github.io</span>
+            </div>
+            <div class="status-row">
+                <span class="label">Status:</span>
+                <span class="status-badge status-checking" id="status">Initializing...</span>
+            </div>
+            <div class="status-row">
+                <span class="label">Last Check:</span>
+                <span class="value" id="lastCheck">Never</span>
+            </div>
+            <div class="status-row">
+                <span class="label">Response Time:</span>
+                <span class="value" id="responseTime">-</span>
+            </div>
+            <div class="status-row">
+                <span class="label">Total Checks:</span>
+                <span class="value" id="totalChecks">0</span>
+            </div>
+        </div>
+
+        <button class="btn-check" onclick="manualCheck()" id="checkBtn">Check Now</button>
+
+        <div class="next-check" id="nextCheck">
+            Next automatic check in: 5:00
+        </div>
+
+        <div class="log-container" id="logContainer">
+            <div class="log-entry log-info">🚀 DNS Monitor started - Auto-checking every 5 minutes</div>
+            <div class="log-entry log-warning">⚡ Discord notifications enabled for every check</div>
+        </div>
+
+        <div class="footer">
+            🔔 Monitoring active • Sending to Discord every 5 min
+        </div>
+    </div>
+
+    <script>
+        const DISCORD_WEBHOOK = "__WEBHOOK_DNS_CHECKER__";
+        const DOMAIN = "anishvyapari.github.io";
+        const CHECK_URL = `https://${DOMAIN}`;
+        const CHECK_INTERVAL = 5 * 60 * 1000;
+
+        let totalChecks = 0;
+        let nextCheckTime = null;
+        let countdownInterval = null;
+
+        function addLog(message, type = 'info') {
+            const logContainer = document.getElementById('logContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+            if (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.firstChild);
+            }
+        }
+
+        async function sendDiscordNotification(status, responseTime, isAuto = true) {
+            const checkType = isAuto ? '🔄 Automatic Check' : '👆 Manual Check';
+            const embed = {
+                title: status === 'online' ? '✅ Domain Check - Online' : '❌ Domain Check - Offline',
+                description: `**${checkType}** completed successfully`,
+                color: status === 'online' ? 3066993 : 15158332,
+                fields: [
+                    {
+                        name: '🌐 Domain',
+                        value: DOMAIN,
+                        inline: true
+                    },
+                    {
+                        name: '⏱️ Response Time',
+                        value: responseTime || 'Timeout',
+                        inline: true
+                    },
+                    {
+                        name: '📊 Total Checks',
+                        value: totalChecks.toString(),
+                        inline: true
+                    },
+                    {
+                        name: '🕐 Checked At',
+                        value: new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }),
+                        inline: false
+                    }
+                ],
+                footer: {
+                    text: 'DNS Monitor • NeuralOS'
+                },
+                timestamp: new Date().toISOString()
+            };
+
+            try {
+                await fetch(DISCORD_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ embeds: [embed] })
+                });
+                addLog('✓ Discord notification sent', 'success');
+            } catch (err) {
+                addLog(`✗ Discord send failed: ${err.message}`, 'error');
+            }
+        }
+
+        function updateCountdown() {
+            if (!nextCheckTime) return;
+
+            const now = Date.now();
+            const remaining = Math.max(0, nextCheckTime - now);
+            const minutes = Math.floor(remaining / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('nextCheck').textContent = `Next automatic check in: ${display}`;
+        }
+
+        async function checkDNS(isAuto = true) {
+            const statusEl = document.getElementById('status');
+            const lastCheckEl = document.getElementById('lastCheck');
+            const responseTimeEl = document.getElementById('responseTime');
+            const totalChecksEl = document.getElementById('totalChecks');
+
+            statusEl.className = 'status-badge status-checking';
+            statusEl.textContent = 'Checking...';
+
+            const checkType = isAuto ? 'Auto check' : 'Manual check';
+            addLog(`${checkType} started...`, 'info');
+
+            const startTime = performance.now();
+            let status = 'offline';
+            let responseTimeText = 'Timeout';
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                const response = await fetch(CHECK_URL, {
+                    method: 'HEAD',
+                    signal: controller.signal,
+                    cache: 'no-cache'
+                });
+
+                clearTimeout(timeoutId);
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+                responseTimeText = `${responseTime}ms`;
+
+                if (response.ok) {
+                    status = 'online';
+                    statusEl.className = 'status-badge status-online';
+                    statusEl.textContent = 'Online';
+                    responseTimeEl.textContent = responseTimeText;
+                    addLog(`✓ Domain online (${responseTimeText})`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (err) {
+                status = 'offline';
+                statusEl.className = 'status-badge status-offline';
+                statusEl.textContent = 'Offline';
+                responseTimeEl.textContent = 'Timeout';
+                addLog(`✗ Check failed: ${err.message}`, 'error');
+            }
+
+            totalChecks++;
+            totalChecksEl.textContent = totalChecks;
+            lastCheckEl.textContent = new Date().toLocaleString();
+
+            await sendDiscordNotification(status, responseTimeText, isAuto);
+
+            if (isAuto) {
+                nextCheckTime = Date.now() + CHECK_INTERVAL;
+            }
+        }
+
+        function manualCheck() {
+            checkDNS(false);
+        }
+
+        countdownInterval = setInterval(updateCountdown, 1000);
+        setInterval(() => checkDNS(true), CHECK_INTERVAL);
+
+        window.addEventListener('load', () => {
+            nextCheckTime = Date.now() + CHECK_INTERVAL;
+            setTimeout(() => checkDNS(true), 2000);
+        });
+    </script>
+</body>
+
+</html>

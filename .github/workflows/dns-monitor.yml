@@ -1,0 +1,80 @@
+name: DNS Monitor
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  workflow_dispatch:  # Manual trigger
+
+jobs:
+  check-dns:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check Domain Status
+        run: |
+          DOMAIN="www.vyapari.space"
+          WEBHOOK_URL="${{ secrets.WEBHOOK_DNS_CHECKER }}"
+          
+          START_TIME=$(date +%s%3N)
+          
+          if curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$DOMAIN" | grep -q "200"; then
+            END_TIME=$(date +%s%3N)
+            RESPONSE_TIME=$((END_TIME - START_TIME))
+            STATUS="online"
+            COLOR=3066993
+            TITLE="✅ Domain Check - Online"
+            DESCRIPTION="**🔄 Automatic Check** completed successfully"
+            RESPONSE_TEXT="${RESPONSE_TIME}ms"
+          else
+            STATUS="offline"
+            COLOR=15158332
+            TITLE="❌ Domain Check - Offline"
+            DESCRIPTION="**⚠️ Automatic Check** - Domain not responding"
+            RESPONSE_TEXT="Timeout"
+          fi
+          
+          TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          TIMESTAMP_IST=$(TZ=Asia/Kolkata date "+%Y-%m-%d %I:%M:%S %p IST")
+          
+          # Get workflow run number
+          RUN_NUMBER="${{ github.run_number }}"
+          
+          # Send to Discord
+          curl -H "Content-Type: application/json" \
+            -d "{
+              \"embeds\": [{
+                \"title\": \"$TITLE\",
+                \"description\": \"$DESCRIPTION\",
+                \"color\": $COLOR,
+                \"fields\": [
+                  {
+                    \"name\": \"🌐 Domain\",
+                    \"value\": \"$DOMAIN\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"⏱️ Response Time\",
+                    \"value\": \"$RESPONSE_TEXT\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"📊 Check Number\",
+                    \"value\": \"#$RUN_NUMBER\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"🕐 Checked At\",
+                    \"value\": \"$TIMESTAMP_IST\",
+                    \"inline\": false
+                  }
+                ],
+                \"footer\": {
+                  \"text\": \"DNS Monitor • GitHub Actions • NeuralOS\"
+                },
+                \"timestamp\": \"$TIMESTAMP\"
+              }]
+            }" \
+            "$WEBHOOK_URL"
+          
+          echo "DNS check completed: $STATUS ($RESPONSE_TEXT)"
+

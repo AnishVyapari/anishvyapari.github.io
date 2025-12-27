@@ -1,0 +1,26 @@
+{
+  "name": "anishvyapari-portfolio",
+  "version": "1.0.0",
+  "description": "A fully interactive, browser-based desktop OS simulation serving as a developer portfolio",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "build": "echo 'Build process here'",
+    "test": "echo 'Tests here'"
+  },
+  "keywords": [
+    "portfolio",
+    "developer",
+    "interactive",
+    "desktop-os",
+    "web-development",
+    "ai-ml"
+  ],
+  "author": "Anish Vyapari",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AnishVyapari/anishvyapari.github.io"
+  },
+  "homepage": "https://anishvyapari.github.io"
+}
